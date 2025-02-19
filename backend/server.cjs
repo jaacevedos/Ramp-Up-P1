@@ -25,7 +25,7 @@ server.use(
 
 function readSecret(secretName) {
   try {
-    return fs.readFileSync(`/run/secrets/${secretName}`, 'utf8');
+    return fs.readFileSync(`/run/secrets/${secretName}`, 'utf8').trim();
   } catch (err) {
     console.warn(`Secret could not be read "${secretName}" ${err.message}`);
     return null;
