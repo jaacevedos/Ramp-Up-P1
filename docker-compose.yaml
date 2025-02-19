@@ -1,0 +1,66 @@
+services:
+  db:
+    build: ./database
+    image: tunefy-db
+    container_name: tunefy-db
+    user: "999:999"
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB_FILE: /run/secrets/db_name
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+    networks:
+      - private_network
+
+  backend:
+    build: ./backend
+    image: tunefy-backend
+    container_name: tunefy-backend
+    environment:
+      PGUSER: /run/secrets/db_user
+      PGPASS: /run/secrets/db_password
+      PGDB: /run/secrets/db_name
+      PGHOST: db
+      GOOGLE_KEY: ${GOOGLE_KEY}
+      AI21_TOKEN: ${AI21_TOKEN}
+    volumes:
+      - ./db_user.txt:/run/secrets/db_user:ro
+      - ./db_password.txt:/run/secrets/db_password:ro
+      - ./db_name.txt:/run/secrets/db_name:ro
+    depends_on:
+      - db
+    networks:
+      - private_network
+      - exposed_network
+    ports:
+      - "3001:3001"
+
+  frontend:
+    build: ./frontend
+    image: tunefy-frontend
+    container_name: tunefy-frontend
+    environment:
+      REACT_APP_BACKEND_URL: "http://${VM_IP}:3001"
+    depends_on:
+      - backend
+    networks:
+      - exposed_network
+    ports:
+      - "3000:3000"
+
+networks:
+  private_network:
+    driver: bridge
+  exposed_network:
+    driver: bridge
+
+secrets:
+  db_password:
+    file: db_password.txt
+  db_user:
+    file: db_user.txt
+  db_name:
+    file: db_name.txt
